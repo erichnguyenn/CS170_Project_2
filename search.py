@@ -1,17 +1,18 @@
 import random
-import itertools
-from typing import Callable, List, Set, Tuple
 
 RANDOM_SEED = 42  
 
 def rand_eval():
     #TODO: Implement a random evaluation function
+    return 
     
 def forward_selection():
     #TODO: Implement the forward selection algorithm
+    return
 
 def backward_elimination():
     #TODO: Implement the backward elimination algorithm
+    return
     
 def main():
 
@@ -33,7 +34,7 @@ def main():
     print("1) Forward Selection")
     print("2) Backward Elimination")
 
-    choice = input("\nEnter choice [1-3]: ").strip()
+    choice = input("\nEnter choice [1-2]: ").strip()
     if choice == "1":
         #TODO: Call the forward selection function
         forward_selection()
@@ -43,5 +44,5 @@ def main():
     else:
         print("Invalid Input")
 
-
-
+if __name__ == "__main__":
+    main()
