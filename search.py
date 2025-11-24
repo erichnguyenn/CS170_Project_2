@@ -48,6 +48,10 @@ def forward_selection(total_features):
 def backward_elimination():
     #TODO: Implement the backward elimination algorithm
     return
+
+def backward_elimination():
+    #TODO: Implement the backward elimination algorithm
+    return
     
 def main():
 
@@ -80,3 +84,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
