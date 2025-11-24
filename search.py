@@ -7,15 +7,16 @@ def rand_eval(feature_set):
     return random.uniform(0, 100)
     
 def forward_selection(total_features):
-    current_features = [] # Start with no features
+
+    curr_features = [] # Start with no features
     
-    initial_accuracy = rand_eval(current_features) # Initial state
+    init_accuracy = rand_eval(curr_features) # Initial state
     
     # Track best found so far
-    best_overall_accuracy = initial_accuracy
-    best_overall_features = list(current_features)
+    best_ovr_accuracy = init_accuracy
+    best_ovr_features = list(curr_features)
     
-    print(f"Initial: {initial_accuracy:.1f}%")
+    print(f"Initial: {init_accuracy:.1f}%")
     print("Beginning search.\n")
     
     for i in range(total_features):
@@ -24,8 +25,8 @@ def forward_selection(total_features):
         
         # Iterate through all features not in set
         for feature in range(1, total_features + 1):
-            if feature not in current_features:
-                temp_features = current_features + [feature]
+            if feature not in curr_features:
+                temp_features = curr_features + [feature]
                 accuracy = rand_eval(temp_features)
                 
                 print(set(temp_features), accuracy)
@@ -36,13 +37,13 @@ def forward_selection(total_features):
         
         # Keep adding even if accuracy decreases (Search all subsets)
         if feature_to_add_this_level != -1:
-            current_features.append(feature_to_add_this_level)
+            curr_features.append(feature_to_add_this_level)
             
-            if best_accuracy_this_level > best_overall_accuracy:
-                best_overall_accuracy = best_accuracy_this_level
-                best_overall_features = list(current_features)
+            if best_accuracy_this_level > best_ovr_accuracy:
+                best_ovr_accuracy = best_accuracy_this_level
+                best_ovr_features = list(curr_features)
                 
-    print(set(best_overall_features), best_overall_accuracy)
+    print(set(best_ovr_features), best_ovr_accuracy)
 
 def backward_elimination():
     #TODO: Implement the backward elimination algorithm
