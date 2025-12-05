@@ -85,7 +85,109 @@ def backward_elimination(total_features):
 
     print(f"\nFinished search!! The best feature subset is {set(best_overall_features)}, which has an accuracy of {best_overall_accuracy:.1f}%")
 
-    
+# ---------------- Part II: NN classifier + leave-one-out validator ----------------
+
+def load_dataset(path):
+    """
+    Load dataset from a text file.
+    Format: first column = class label (1 or 2), remaining columns = features.
+    Returns:
+        X_norm: list of list of floats (normalized features)
+        y:      list of ints (class labels)
+    """
+    X = []
+    y = []
+
+    with open(path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split()
+            label = int(float(parts[0]))
+            features = [float(v) for v in parts[1:]]
+            y.append(label)
+            X.append(features)
+
+    if not X:
+        raise ValueError("Dataset appears to be empty.")
+
+    n = len(X)
+    d = len(X[0])
+
+    # Compute mean and std for each feature (for normalization)
+    means = [0.0] * d
+    stds = [0.0] * d
+
+    # Means
+    for j in range(d):
+        col_sum = 0.0
+        for i in range(n):
+            col_sum += X[i][j]
+        means[j] = col_sum / n
+
+    # Standard deviations
+    for j in range(d):
+        var_sum = 0.0
+        for i in range(n):
+            diff = X[i][j] - means[j]
+            var_sum += diff * diff
+        variance = var_sum / n
+        stds[j] = math.sqrt(variance)
+        if stds[j] == 0.0:
+            stds[j] = 1.0  # avoid division by zero for constant features
+
+    # Normalize (z-score)
+    X_norm = []
+    for i in range(n):
+        row = []
+        for j in range(d):
+            z = (X[i][j] - means[j]) / stds[j]
+            row.append(z)
+        X_norm.append(row)
+
+    return X_norm, y
+
+
+class NNClassifier:
+    """
+    Simple 1-Nearest-Neighbor classifier using Euclidean distance.
+    Implements Train and Test methods to match the spec.
+    """
+
+    def __init__(self):
+        self.train_X = None
+        self.train_y = None
+
+    def Train(self, X, y):
+        """Store training data."""
+        self.train_X = X
+        self.train_y = y
+
+    def Test(self, x):
+        """
+        Predict the class label for a single test instance x.
+        Uses Euclidean distance to all training instances.
+        """
+        if self.train_X is None or self.train_y is None:
+            raise ValueError("Classifier has not been trained yet.")
+
+        best_dist_sq = None
+        best_label = None
+
+        for i in range(len(self.train_X)):
+            train_instance = self.train_X[i]
+            dist_sq = 0.0
+            for j in range(len(train_instance)):
+                diff = train_instance[j] - x[j]
+                dist_sq += diff * diff
+
+            if best_dist_sq is None or dist_sq < best_dist_sq:
+                best_dist_sq = dist_sq
+                best_label = self.train_y[i]
+
+        return best_label
+
 def main():
 
     if RANDOM_SEED is not None:
