@@ -187,6 +187,55 @@ class NNClassifier:
                 best_label = self.train_y[i]
 
         return best_label
+    
+def leave_one_out_accuracy(X, y, feature_subset, verbose=True):
+    
+    if not feature_subset:
+        raise ValueError("Feature subset must not be empty.")
+
+    # Convert to 0-based indices
+    feat_idx = [f - 1 for f in feature_subset]
+
+    n = len(X)
+    correct = 0
+
+    start_time = time.time()
+
+    for i in range(n):
+        # Build training set (all but i)
+        X_train = []
+        y_train = []
+        for k in range(n):
+            if k == i:
+                continue
+            row = [X[k][j] for j in feat_idx]  # select chosen features
+            X_train.append(row)
+            y_train.append(y[k])
+
+        # Test instance (only chosen features)
+        x_test = [X[i][j] for j in feat_idx]
+        y_true = y[i]
+
+        clf = NNClassifier()
+        clf.Train(X_train, y_train)
+        y_pred = clf.Test(x_test)
+
+        if y_pred == y_true:
+            correct += 1
+
+        if verbose and (i + 1) % 50 == 0:
+            print(f"  Processed {i + 1}/{n} instances...")
+
+    elapsed = time.time() - start_time
+    accuracy = correct / n
+
+    print(f"\nLeave-one-out took {elapsed:.2f} seconds "
+          f"for {n} instances using features {set(feature_subset)}.")
+    print(f"Correctly classified {correct} out of {n} instances.")
+    print(f"Accuracy: {accuracy * 100:.1f}%")
+
+    return accuracy
+
 
 def main():
 
