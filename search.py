@@ -150,10 +150,6 @@ def load_dataset(path):
 
 
 class NNClassifier:
-    """
-    Simple 1-Nearest-Neighbor classifier using Euclidean distance.
-    Implements Train and Test methods to match the spec.
-    """
 
     def __init__(self):
         self.train_X = None
@@ -236,6 +232,50 @@ def leave_one_out_accuracy(X, y, feature_subset, verbose=True):
 
     return accuracy
 
+def run_part2():
+    print("\n--- Part II: Nearest Neighbor Classifier + Leave-One-Out ---")
+
+    dataset_path = input(
+        "\nPlease enter the dataset file name "
+        "(e.g., small-test-dataset.txt or large-test-dataset.txt): "
+    ).strip()
+
+    try:
+        X, y = load_dataset(dataset_path)
+    except Exception as e:
+        print(f"Error loading dataset: {e}")
+        return
+
+    num_instances = len(X)
+    num_features = len(X[0])
+
+    print(f"\nLoaded dataset '{dataset_path}'.")
+    print(f"Number of instances: {num_instances}")
+    print(f"Number of features: {num_features}")
+
+    print("\nEnter the feature subset as space-separated indices.")
+    print("  Examples:")
+    print("    For the small dataset test: 3 5 7")
+    print("    For the large dataset test: 1 15 27")
+    raw = input("Feature subset: ").strip()
+
+    try:
+        feature_subset = [int(tok) for tok in raw.split()]
+        if not feature_subset:
+            raise ValueError
+    except ValueError:
+        print("Invalid feature subset. Please enter integers like: 3 5 7")
+        return
+
+    # Check that all features are in range
+    invalid = [f for f in feature_subset if f < 1 or f > num_features]
+    if invalid:
+        print(f"Invalid feature indices (must be between 1 and {num_features}): {invalid}")
+        return
+
+    acc = leave_one_out_accuracy(X, y, feature_subset, verbose=True)
+    print(f"\nFinal accuracy with features {set(feature_subset)}: {acc * 100:.1f}%\n")
+
 
 def main():
 
@@ -254,16 +294,17 @@ def main():
             print("Please enter a positive integer for number of features.")
 
     print("\nType the number of the algorithm you want to run.\n")
-    print("1) Forward Selection")
-    print("2) Backward Elimination")
+    print("1) Forward Selection (Part I)")
+    print("2) Backward Elimination (Part I)")
+    print("3) Nearest Neighbor Validator (Part II)")
 
     choice = input("\nEnter choice [1-2]: ").strip()
     if choice == "1":
-        #TODO: Call the forward selection function
         forward_selection(total_features)
     elif choice == "2":
-        #TODO: Call the backward elimination function
         backward_elimination(total_features)
+    elif choice == "3":
+        run_part2()
     else:
         print("Invalid Input")
 
