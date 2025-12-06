@@ -277,7 +277,6 @@ def run_part2():
     print(f"\nFinal accuracy with features {set(feature_subset)}: {acc * 100:.1f}%\n")
 
 
-
 def main():
 
     if RANDOM_SEED is not None:
@@ -295,16 +294,17 @@ def main():
             print("Please enter a positive integer for number of features.")
 
     print("\nType the number of the algorithm you want to run.\n")
-    print("1) Forward Selection")
-    print("2) Backward Elimination")
+    print("1) Forward Selection (Part I)")
+    print("2) Backward Elimination (Part I)")
+    print("3) Nearest Neighbor Validator (Part II)")
 
-    choice = input("\nEnter choice [1-2]: ").strip()
+    choice = input("\nEnter choice [1-3]: ").strip()
     if choice == "1":
-        #TODO: Call the forward selection function
         forward_selection(total_features)
     elif choice == "2":
-        #TODO: Call the backward elimination function
         backward_elimination(total_features)
+    elif choice == "3":
+        run_part2()
     else:
         print("Invalid Input")
 
