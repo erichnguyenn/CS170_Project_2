@@ -298,7 +298,7 @@ def main():
     print("2) Backward Elimination (Part I)")
     print("3) Nearest Neighbor Validator (Part II)")
 
-    choice = input("\nEnter choice [1-3]: ").strip()
+    choice = input("\nEnter choice [1-2]: ").strip()
     if choice == "1":
         forward_selection(total_features)
     elif choice == "2":
