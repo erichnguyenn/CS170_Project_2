@@ -88,16 +88,10 @@ def backward_elimination(total_features):
 # ---------------- Part II: NN classifier + leave-one-out validator ----------------
 
 def load_dataset(path):
-    """
-    Load dataset from a text file.
-    Format: first column = class label (1 or 2), remaining columns = features.
-    Returns:
-        X_norm: list of list of floats (normalized features)
-        y:      list of ints (class labels)
-    """
     X = []
     y = []
 
+    # Read each line and parse label + features
     with open(path, 'r') as f:
         for line in f:
             line = line.strip()
@@ -171,13 +165,16 @@ class NNClassifier:
         best_dist_sq = None
         best_label = None
 
+        # Compare x to every training row
         for i in range(len(self.train_X)):
             train_instance = self.train_X[i]
             dist_sq = 0.0
+            # Compute squared Euclidean distance
             for j in range(len(train_instance)):
                 diff = train_instance[j] - x[j]
                 dist_sq += diff * diff
 
+            # Update nearest neighbor if this distance is smaller
             if best_dist_sq is None or dist_sq < best_dist_sq:
                 best_dist_sq = dist_sq
                 best_label = self.train_y[i]
