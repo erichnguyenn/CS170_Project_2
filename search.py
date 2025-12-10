@@ -183,13 +183,16 @@ class NNClassifier:
         best_dist_sq = None
         best_label = None
 
+        # Compare x to every training row
         for i in range(len(self.train_X)):
             train_instance = self.train_X[i]
             dist_sq = 0.0
+            # Compute squared Euclidean distance
             for j in range(len(train_instance)):
                 diff = train_instance[j] - x[j]
                 dist_sq += diff * diff
 
+            # Update nearest neighbor if this distance is smaller
             if best_dist_sq is None or dist_sq < best_dist_sq:
                 best_dist_sq = dist_sq
                 best_label = self.train_y[i]
