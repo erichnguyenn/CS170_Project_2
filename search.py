@@ -7,85 +7,101 @@ RANDOM_SEED = 42
 def rand_eval(feature_set):
     return random.uniform(0, 100)
     
-def forward_selection(total_features):
-    current_features = [] # Start with no features
-    
-    initial_accuracy = rand_eval(current_features) # Initial state
-    
-    # Track best found so far
+def forward_selection(X, y):
+    total_features = len(X[0])
+    current_features = [] #start with empty set
+
+    # Evaluate accuracy with no features
+    initial_accuracy = evaluate_subset(X, y, current_features)
+
+    # Keep track of best overall
     best_overall_accuracy = initial_accuracy
     best_overall_features = list(current_features)
-    
-    print(f"Using no features and \"random\" evaluation, I get an accuracy of {initial_accuracy:.1f}%")
+
+    print(f"Running nearest neighbor with no features (default rate), "
+          f"using \"leaving-one-out\" evaluation, I get an accuracy of {initial_accuracy * 100:.1f}%")
     print("Beginning search.\n")
-    
+
+    # Iterate to add features
     for i in range(total_features):
         best_accuracy_this_level = -1
         feature_to_add_this_level = -1
-        
-        # Iterate through all features not in set
+
+        # Try adding each feature not already in the set
         for feature in range(1, total_features + 1):
             if feature not in current_features:
                 temp_features = current_features + [feature]
-                accuracy = rand_eval(temp_features)
-                
-                print(f"\tUsing feature(s) {set(temp_features)} accuracy is {accuracy:.1f}%")
-                
+                accuracy = evaluate_subset(X, y, temp_features)
+
+                print(f"\tUsing feature(s) {set(temp_features)} accuracy is {accuracy * 100:.1f}%")
+
+                # Check if best so far this level
                 if accuracy > best_accuracy_this_level:
                     best_accuracy_this_level = accuracy
                     feature_to_add_this_level = feature
-        
-        # Keep adding even if accuracy decreases (Search all subsets)
+
+        # Add the best feature found this level
         if feature_to_add_this_level != -1:
             current_features.append(feature_to_add_this_level)
-            print(f"\nFeature set {set(current_features)} was best, accuracy is {best_accuracy_this_level:.1f}%")
-            
+            print(f"\nFeature set {set(current_features)} was best, "
+                  f"accuracy is {best_accuracy_this_level * 100:.1f}%")
+
+            # Update overall best if improved
             if best_accuracy_this_level > best_overall_accuracy:
                 best_overall_accuracy = best_accuracy_this_level
                 best_overall_features = list(current_features)
             else:
                 print("(Warning, Accuracy has decreased!)")
-                
-    print(f"\nFinished search!! The best feature subset is {set(best_overall_features)}, which has an accuracy of {best_overall_accuracy:.1f}%")
 
-def backward_elimination(total_features):
-    current_features = list(range(1, total_features + 1)) # Start with all features
-    
-    initial_accuracy = rand_eval(current_features) # Initial state
-    
-    # Track best found so far
+    print(f"\nFinished search!! The best feature subset is {set(best_overall_features)}, "
+          f"which has an accuracy of {best_overall_accuracy * 100:.1f}%")
+
+def backward_elimination(X, y):
+    total_features = len(X[0])
+    current_features = list(range(1, total_features + 1))
+
+    # Evaluate accuracy with all features
+    initial_accuracy = evaluate_subset(X, y, current_features)
+
+    # Keep track of best overall
     best_overall_accuracy = initial_accuracy
     best_overall_features = list(current_features)
-    
-    print(f"Using all features {set(current_features)} and \"random\" evaluation, I get an accuracy of {initial_accuracy:.1f}%")
+
+    print(f"Running nearest neighbor with all features, "
+          f"using \"leaving-one-out\" evaluation, I get an accuracy of {initial_accuracy * 100:.1f}%")
     print("Beginning search.\n")
-    
+
+    # Iterate to remove features
     for i in range(total_features):
         best_accuracy_this_level = -1
         feature_to_remove_this_level = -1
-        
-        # Iterate through all features in set to find best removal
+
         for feature in current_features:
             temp_features = [f for f in current_features if f != feature]
-            accuracy = rand_eval(temp_features)
-            
-            print(f"\tUsing feature(s) {set(temp_features)} accuracy is {accuracy:.1f}%")
-            
+            accuracy = evaluate_subset(X, y, temp_features)
+
+            print(f"\tUsing feature(s) {set(temp_features)} accuracy is {accuracy * 100:.1f}%")
+
+            # Check if best so far this level
             if accuracy > best_accuracy_this_level:
                 best_accuracy_this_level = accuracy
                 feature_to_remove_this_level = feature
-                
+
+        # Remove the best feature found this level
         if feature_to_remove_this_level != -1:
             current_features.remove(feature_to_remove_this_level)
-            print(f"\nFeature set {set(current_features)} was best, accuracy is {best_accuracy_this_level:.1f}%")
-            
+            print(f"\nFeature set {set(current_features)} was best, "
+                  f"accuracy is {best_accuracy_this_level * 100:.1f}%")
+
+            # Update overall best if improved
             if best_accuracy_this_level >= best_overall_accuracy:
                 best_overall_accuracy = best_accuracy_this_level
                 best_overall_features = list(current_features)
             else:
                 print("(Warning, Accuracy has decreased!)")
 
-    print(f"\nFinished search!! The best feature subset is {set(best_overall_features)}, which has an accuracy of {best_overall_accuracy:.1f}%")
+    print(f"\nFinished search!! The best feature subset is {set(best_overall_features)}, "
+          f"which has an accuracy of {best_overall_accuracy * 100:.1f}%")
 
 # ---------------- Part II: NN classifier + leave-one-out validator ----------------
 
@@ -93,7 +109,7 @@ def load_dataset(path):
     X = []
     y = []
 
-    # Read each line and parse label + features
+    # Read data
     with open(path, 'r') as f:
         for line in f:
             line = line.strip()
@@ -183,17 +199,26 @@ class NNClassifier:
 
         return best_label
     
-def leave_one_out_accuracy(X, y, feature_subset, verbose=True):
+def default_rate(y):
+    """Accuracy using the majority class only."""
+    counts = {}
+    for label in y:
+        counts[label] = counts.get(label, 0) + 1
+    return max(counts.values()) / len(y)
+
     
+def leave_one_out_accuracy(X, y, feature_subset, verbose=True, print_summary=True):
+
     if not feature_subset:
-        raise ValueError("Feature subset must not be empty.")
+        # For Part III, allow empty subset using default rate
+        acc = default_rate(y)
+        if print_summary:
+            print(f"Accuracy: {acc * 100:.1f}%")
+        return acc
 
-    # Convert to 0-based indices
     feat_idx = [f - 1 for f in feature_subset]
-
     n = len(X)
     correct = 0
-
     start_time = time.time()
 
     for i in range(n):
@@ -203,7 +228,7 @@ def leave_one_out_accuracy(X, y, feature_subset, verbose=True):
         for k in range(n):
             if k == i:
                 continue
-            row = [X[k][j] for j in feat_idx]  # select chosen features
+            row = [X[k][j] for j in feat_idx] # select chosen features
             X_train.append(row)
             y_train.append(y[k])
 
@@ -224,12 +249,14 @@ def leave_one_out_accuracy(X, y, feature_subset, verbose=True):
     elapsed = time.time() - start_time
     accuracy = correct / n
 
-    print(f"\nLeave-one-out took {elapsed:.2f} seconds "
-          f"for {n} instances using features {set(feature_subset)}.")
-    print(f"Correctly classified {correct} out of {n} instances.")
-    print(f"Accuracy: {accuracy * 100:.1f}%")
+    if print_summary:
+        print(f"\nLeave-one-out took {elapsed:.2f} seconds "
+              f"for {n} instances using features {set(feature_subset)}.")
+        print(f"Correctly classified {correct} out of {n} instances.")
+        print(f"Accuracy: {accuracy * 100:.1f}%")
 
     return accuracy
+
 
 def run_part2():
     print("\n--- Part II: Nearest Neighbor Classifier + Leave-One-Out ---")
@@ -258,6 +285,7 @@ def run_part2():
     print("    For the large dataset test: 1 15 27")
     raw = input("Feature subset: ").strip()
 
+    # Convert input to list of integers
     try:
         feature_subset = [int(tok) for tok in raw.split()]
         if not feature_subset:
@@ -275,6 +303,12 @@ def run_part2():
     acc = leave_one_out_accuracy(X, y, feature_subset, verbose=True)
     print(f"\nFinal accuracy with features {set(feature_subset)}: {acc * 100:.1f}%\n")
 
+def evaluate_subset(X, y, subset):
+
+    if not subset:
+        return default_rate(y)
+    return leave_one_out_accuracy(X, y, subset, verbose=False, print_summary=False)
+
 
 def main():
 
@@ -283,29 +317,47 @@ def main():
 
     print("Welcome to Eric, Rafat, and Lynvy's Feature Selection Algorithm.")
 
-    while True:
-        try:
-            total_features = int(input("\nPlease enter total number of features: ").strip())
-            if total_features <= 0:
-                raise ValueError    
-            break
-        except ValueError:
-            print("Please enter a positive integer for number of features.")
-
     print("\nType the number of the algorithm you want to run.\n")
-    print("1) Forward Selection (Part I)")
-    print("2) Backward Elimination (Part I)")
-    print("3) Nearest Neighbor Validator (Part II)")
+    print("1) Forward Selection ")
+    print("2) Backward Elimination ")
+    print("3) Nearest Neighbor Validator ")
 
-    choice = input("\nEnter choice [1-2]: ").strip()
-    if choice == "1":
-        forward_selection(total_features)
-    elif choice == "2":
-        backward_elimination(total_features)
+    choice = input("\nEnter choice [1-3]: ").strip()
+
+    if choice in ("1", "2"):
+        dataset_path = input("\nType in the name of the file to test: ").strip()
+
+        try:
+            X, y = load_dataset(dataset_path)
+        except Exception as e:
+            print(f"Error loading dataset: {e}")
+            return
+
+        print(f"\nThis dataset has {len(X[0])} features (not including the class attribute), "
+              f"with {len(X)} instances.")
+        print("Please wait while I normalize the data… Done!")
+
+        if choice == "1":
+            forward_selection(X, y)
+        else:
+            backward_elimination(X, y)
+
     elif choice == "3":
         run_part2()
     else:
         print("Invalid Input")
-
 if __name__ == "__main__":
     main()
+    
+
+# Lynvy Chang-lchan171-Session 1, Eric Nguyen-enguy197-Session 1, Rafat Alam-ralam016-Session 1
+#DatasetID: 2
+#Small Dataset Results:
+#- Forward: Feature Subset: {3, 5}, Acc: 92%
+#- Backward: Feature Subset: {2, 4, 5, 7, 10}, Acc: 82%
+#Large Dataset Results:
+#- Forward: Feature Subset: {1, 27}, Acc:95.5%
+#- Backward: Feature Subset: {27}, Acc: 84.7%
+#titanic Dataset Results:
+#- Forward: Feature Subset: {2}, Acc: 78.0%
+#- Backward: Feature Subset: {2}, Acc: 78.0%
